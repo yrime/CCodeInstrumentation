@@ -24,6 +24,12 @@ class PreProcAnalizer:
         self.findedPreProcDirective = []
         self.findedStrings = []
 
+    def checkInStringLiteral(self, i_in, i_out):
+        for o in self.findedStrings:
+            if (o.startOfDirective < i_in) and (o.endOfDirective > i_out):
+                return True
+        return False
+
     def init(self, fname, inc, fcomile):
         self.fname = fname
         self.inc = inc
@@ -53,7 +59,8 @@ class PreProcAnalizer:
             if kind in {"END"}:
                 pass
             elif kind in {"PAS"}:
-                return mo.end()
+                if not self.checkInStringLiteral(mo.start(), mo.end()):
+                    return mo.end()
 
     def findPreProcDirective(self, ftext):
         tok_regex = '|'.join('(?P<%s>%s)' % pair for pair in self.PreProcWords)
@@ -64,9 +71,9 @@ class PreProcAnalizer:
             print("part")
             t = mo.start()
             print(ftext[mo.start(): endPos + t])
-            if kind in {"IF", "INCLUDE", "DEFINE"}:
+            if kind in {"IF", "INCLUDE", "DEFINE", "ERROR", "PRAGMA"}:
                 pass
-            elif kind in {"IFDEF", "IFNDEF", "ELIF", "ELSE"}:
+            elif kind in {"IFDEF", "IFNDEF", "ELIF", "ELSE", "ENDIF"}:
                 pass
         '''
         ("INCLUDE", r"#include "),
@@ -80,7 +87,7 @@ class PreProcAnalizer:
         ("ERROR", r"#error"),
         ("PRAGMA", r"#pragma")
         '''
-testText = "asd\"adfad(\\\"\"\"\"\n#ifdef sdfsdf\n#if sdf \\ \ndf\\  \nxdf   \\ \nggg\nhjgk\nljn"
+testText = "asd\"adfad(\\\"\"\"\"\n#ifdef sdfsdf\n#if sdf \\ \ndf\\  \nxdf  \" \\ \nggg\n\"hjgk\nljn"
 
 ppa = PreProcAnalizer()
 ppa.findStringsLiteral(testText)
